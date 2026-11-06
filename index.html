@@ -1,0 +1,666 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  BookOpen,
+  Bot,
+  Calendar,
+  Search,
+  Download,
+  Eye,
+  ChevronRight,
+  Send,
+  User,
+  Clock,
+  MapPin,
+  Users
+} from 'lucide-react';
+
+const App = () => {
+  const [currentView, setCurrentView] = useState('home'); // 'home', 'subjects', 'lectures', 'bot', 'groups', 'schedule'
+  const [selectedSubject, setSelectedSubject] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [previewModal, setPreviewModal] = useState({ isOpen: false, title: '', content: '', lang: '' });
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: 1,
+      sender: 'bot',
+      text: 'أهلاً بك! أنا المساعد الجامعي الخاص بك. يمكنك سؤالي عن أي محاضرة وسأقوم بشرحها وتبسيطها لك.',
+      time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const messagesEndRef = useRef(null);
+
+  // التمرير التلقائي لأسفل المحادثة
+  useEffect(() => {
+    if (currentView === 'bot') {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, currentView]);
+
+  // إخفاء الإشعار بعد 3 ثوانٍ
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => setToastMessage(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
+
+  // بيانات المواد
+  const subjectsData = [
+    { id: 1, name: '(Comm Presentation)', code: 'HU101' },
+    { id: 2, name: '(Scientific Thinking)', code: 'HU102' },
+    { id: 3, name: '(Math 1)', code: 'MA101' },
+    { id: 4, name: '(Math 0)', code: 'MA100' },
+    { id: 5, name: '(English)', code: 'EN101' },
+    { id: 6, name: '(Electronics)', code: 'EL101' },
+    { id: 7, name: '(Fundamentals)', code: 'CS101' },
+    { id: 8, name: '(Human Rights)', code: 'HU103' },
+  ];
+
+  // بيانات المحاضرات الشاملة مع التلخيصات
+  const allLecturesData = {
+    'CS101': [ // Fundamentals
+      {
+        id: 1,
+        title: 'المحاضرة الأولى: Introduction (مقدمة)',
+        doctor: 'د. محمد قايد',
+        hasContent: true,
+        summaryAr: `أهلاً بك في عالم علوم الحاسب! 🚀\n\nبكل بساطة، الحاسب الآلي هو آلة ذكية جداً. إحنا بنديلها بيانات خام (Input)، هي بتفكر فيها وتعالجها (Processing)، وبعدين تطلع لنا معلومات مفيدة (Output) وتقدر تحفظها لوقت تاني (Storage).\n\nليش بنعتمد على الحاسب؟\n⚡ سريع جداً وبينجز ملايين العمليات في ثانية.\n🎯 دقيق ومش بيغلط لو عطيته الأوامر صح.\n📚 يقدر يخزن كميات مهولة من البيانات.\n\nتذكر دايماً: الحاسوب مقسوم لجزئين أساسيين:\n1. المكونات المادية (Hardware): الحاجات اللي تقدر تمسكها بإيدك.\n2. البرمجيات (Software): الروح اللي بتشغل الجهاز.`,
+        summaryEn: `Welcome to the world of Computer Science! 🚀\n\nSimply put, a computer is an incredibly smart machine. We give it raw data (Input), it thinks and processes it (Processing), then gives us useful information (Output), and can store it for later (Storage).\n\nWhy do we rely on computers?\n⚡ Super Fast: Can do millions of operations per second.\n🎯 Accurate: It doesn't make mistakes if given the right commands.\n📚 Huge Storage Capacity.\n\nAlways remember, a computer is divided into two main parts:\n1. Hardware: The physical components you can touch.\n2. Software: The programs that breathe life into the machine.`
+      },
+      {
+        id: 2,
+        title: 'المحاضرة الثانية: Number System (أنظمة الأعداد)',
+        doctor: 'د. محمد قايد',
+        hasContent: true,
+        summaryAr: `أنظمة الأعداد - لغة الكمبيوتر 🔢\n\nإحنا كبشر بنستخدم النظام العشري (Decimal) اللي بيتكون من 10 أرقام (من 0 لـ 9). لكن الكمبيوتر مبياكلش معاه الكلام ده! الكمبيوتر بيفهم بس الكهربا (شغال أو طافي).\n\nعشان كده الكمبيوتر بيستخدم النظام الثنائي (Binary):\n🟢 1 يعني في كهربا (On).\n🔴 0 يعني مفيش كهربا (Off).\n\nأنظمة تانية بنستخدمها في البرمجة:\n- الثماني (Octal): أساسه 8 (من 0 لـ 7).\n- السادس عشر (Hexadecimal): أساسه 16 (من 0 لـ 9، وبعدها من A لـ F). بنستخدمه عشان نختصر الأرقام الثنائية الطويلة جداً!`,
+        summaryEn: `Number Systems - The Language of Computers 🔢\n\nAs humans, we use the Decimal system (base 10, numbers 0-9). But computers don't understand that! They only understand electricity (on or off).\n\nThat's why computers use the Binary system (base 2):\n🟢 1 means electricity is ON.\n🔴 0 means electricity is OFF.\n\nOther systems used in computing:\n- Octal (base 8): Uses digits 0-7.\n- Hexadecimal (base 16): Uses digits 0-9 and letters A-F. We use it to shorten very long binary numbers!`
+      },
+      {
+        id: 3,
+        title: 'المحاضرة الثالثة: Hardware (المكونات المادية)',
+        doctor: 'د. محمد قايد',
+        hasContent: true,
+        summaryAr: `المكونات المادية - جسم الكمبيوتر 🖥️\n\nأي حاجة تقدر تمسكها في الكمبيوتر هي Hardware. وبتتقسم لـ 4 أقسام رئيسية:\n\n1. وحدات الإدخال (Input): زي الكيبورد والماوس، دي اللي بندخل بيها البيانات.\n2. وحدة المعالجة المركزية (CPU): ده "مخ" الكمبيوتر اللي بيفكر ويعمل كل الحسابات.\n3. وحدات الإخراج (Output): زي الشاشة والسماعات، دي اللي بتعرض لنا النتيجة.\n4. الذاكرة والتخزين (Memory & Storage):\n   - الـ RAM (ذاكرة مؤقتة): سريعة بس بتنسى كل حاجة لو الكهربا قطعت.\n   - الـ Hard Disk (تخزين دائم): بطيء شوية بس بيحفظ بياناتك للأبد.`,
+        summaryEn: `Hardware - The Body of the Computer 🖥️\n\nAnything physical you can touch in a computer is Hardware. It's divided into 4 main categories:\n\n1. Input Devices: Like keyboard and mouse, used to enter data.\n2. Central Processing Unit (CPU): The "Brain" of the computer that does all calculations.\n3. Output Devices: Like monitors and speakers, used to display results.\n4. Memory & Storage:\n   - RAM (Volatile Memory): Super fast but forgets everything if power is lost.\n   - Hard Disk (Non-volatile): Slower but keeps your files permanently safe.`
+      },
+      { id: 4, title: 'المحاضرة الرابعة: Software (البرمجيات)', doctor: 'د. محمد قايد', hasContent: false },
+      { id: 5, title: 'المحاضرة الخامسة: Networks (الشبكات)', doctor: 'د. محمد قايد', hasContent: false },
+      { id: 6, title: 'المحاضرة السادسة: Security (أمن المعلومات)', doctor: 'د. محمد قايد', hasContent: false },
+    ],
+    'default': [
+      { id: 1, title: 'جاري إضافة محاضرات هذه المادة...', doctor: 'غير محدد', hasContent: false }
+    ]
+  };
+
+  const handlePreview = (lecture, lang) => {
+    setPreviewModal({
+      isOpen: true,
+      title: lecture.title,
+      content: lang === 'ar' ? lecture.summaryAr : lecture.summaryEn,
+      lang: lang
+    });
+  };
+
+  const handleExplain = (lectureTitle) => {
+    setCurrentView('bot');
+    const msg = {
+      id: Date.now(),
+      sender: 'user',
+      text: `مرحباً، أريد شرحاً تفصيلياً لـ "${lectureTitle}".`,
+      time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    };
+    setChatMessages(prev => [...prev, msg]);
+    
+    // رد تلقائي من البوت
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        sender: 'bot',
+        text: `بالطبع! سأقوم الآن بتلخيص وشرح أهم النقاط في "${lectureTitle}". \n1. المفهوم الأساسي...\n2. القواعد الهامة...\nهل هناك نقطة محددة لم تفهمها؟`,
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+      }]);
+    }, 1000);
+  };
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    setChatMessages(prev => [...prev, {
+      id: Date.now(),
+      sender: 'user',
+      text: chatInput.trim(),
+      time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    }]);
+    setChatInput('');
+
+    setTimeout(() => {
+      setChatMessages(prev => [...prev, {
+        id: Date.now() + 1,
+        sender: 'bot',
+        text: 'تم استلام سؤالك، دعني أبسط لك هذه المعلومة...',
+        time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+      }]);
+    }, 1000);
+  };
+
+  // فلترة المواد حسب البحث
+  const filteredSubjects = subjectsData.filter(sub => 
+    sub.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // بيانات جدول المحاضرات لجروب 1
+  const scheduleGroup1 = [
+    {
+      day: 'الأحد',
+      slots: [
+        { time: '09:30 AM', items: [{ subject: 'Comm Presentation', doctor: 'د. طه', hall: 'مدرج 3' }] },
+        { time: '11:30 AM', items: [{ subject: 'Section Math 0', doctor: 'م. محمد جاد', hall: 'مبنى G 211 - الأهلية' }] },
+      ]
+    },
+    {
+      day: 'الإثنين',
+      slots: [
+        { time: '09:00 AM', items: [{ subject: 'Scientific Thinking', doctor: 'د. حمادة محمود', hall: 'مدرج 4 - حكومي' }] },
+        { time: '11:00 AM', items: [{ subject: 'Human Rights', doctor: 'د. عادلي أبو هشيمة', hall: 'مدرج 1 - حكومي' }] },
+        { time: '01:00 PM', items: [{ subject: 'Fundamentals', doctor: 'د. محمد قايد', hall: 'مدرج 2 - حكومي' }] }
+      ]
+    },
+    {
+      day: 'الثلاثاء',
+      slots: [
+        { time: '09:00 AM', items: [{ subject: 'Sec Math 1', doctor: 'م. أسماء', hall: 'D 301' }, { subject: 'Sec Math 1', doctor: 'م. رضا', hall: 'B 314' }] },
+        { time: '11:00 AM', items: [{ subject: 'Sec Electronics', doctor: 'م. سلمى', hall: 'H 203' }, { subject: 'Sec Fundamentals', doctor: 'م. هيام', hall: 'E 312' }] },
+        { time: '01:00 PM', items: [{ subject: 'Sec Fundamentals', doctor: 'م. هيام', hall: 'E 312' }, { subject: 'Sec Electronics', doctor: 'م. سلمى', hall: 'H 203' }] }
+      ]
+    },
+    {
+      day: 'الأربعاء',
+      slots: [
+        { time: '09:00 AM', items: [{ subject: 'Math 1', doctor: 'د. دعاء', hall: 'مدرج 2 - حكومي' }] },
+        { time: '11:00 AM', items: [{ subject: 'English', doctor: 'د. شيماء', hall: 'مدرج 3 - حكومي' }] },
+        { time: '01:00 PM', items: [{ subject: 'Electronics', doctor: 'د. شريف', hall: 'مدرج 4 - حكومي' }] },
+        { time: '03:00 PM', items: [{ subject: 'Math 0', doctor: 'د. عبد المنعم', hall: 'قاعة 4 - حكومي' }] }
+      ]
+    }
+  ];
+
+  // بيانات جدول المحاضرات لجروب 2
+  const scheduleGroup2 = [
+    {
+      day: 'الأحد',
+      slots: [
+        { time: '09:30 AM', items: [{ subject: 'Comm Presentation', doctor: 'د. طه', hall: 'مدرج 3 - حكومي' }] },
+        { time: '11:30 AM', items: [{ subject: 'Section Math 0', doctor: 'م. محمد جاد', hall: 'مبنى G 211 - الأهلية' }] },
+        { time: '01:00 PM', items: [{ subject: 'Math 1', doctor: 'د. محمد حسين', hall: 'مبنى C 309 - الأهلية' }] }
+      ]
+    },
+    {
+      day: 'الإثنين',
+      slots: [
+        { time: '09:00 AM', items: [{ subject: 'Scientific Thinking', doctor: 'د. حمادة محمود', hall: 'مدرج 4 - حكومي' }] },
+        { time: '11:00 AM', items: [{ subject: 'Human Rights', doctor: 'د. عادل أبو هشيمة', hall: 'مدرج 1 - حكومي' }] },
+        { time: '01:00 PM', items: [{ subject: 'Fundamentals', doctor: 'د. محمد قايد', hall: 'مدرج 2 - حكومي' }] }
+      ]
+    },
+    {
+      day: 'الثلاثاء',
+      slots: [
+        { time: '09:00 AM', items: [{ subject: 'Sec 3 Fundamentals', doctor: 'م. هيام', hall: 'E 312' }, { subject: 'Sec 4 Electronics', doctor: 'م. سلمى', hall: 'H 203 - الأهلية' }] },
+        { time: '11:00 AM', items: [{ subject: 'Sec 3 Math 1', doctor: 'م. أسماء', hall: 'D 301 - الأهلية' }, { subject: 'Sec 4 Math 1', doctor: 'م. رضا', hall: 'B 314 - الأهلية' }] },
+        { time: '01:00 PM', items: [{ subject: 'Sec 3 Electronics', doctor: 'م. سلمى', hall: 'H 203 - الأهلية' }, { subject: 'Sec 4 Fundamentals', doctor: 'م. هيام', hall: 'E 312 - الأهلية' }] }
+      ]
+    },
+    {
+      day: 'الأربعاء',
+      slots: [
+        { time: '11:00 AM', items: [{ subject: 'English', doctor: 'د. شيماء', hall: 'مدرج 3 - حكومي' }] },
+        { time: '01:00 PM', items: [{ subject: 'Electronics', doctor: 'د. شريف', hall: 'مدرج 4 - حكومي' }] },
+        { time: '03:00 PM', items: [{ subject: 'Math 0', doctor: 'د. عبد المنعم', hall: 'قاعة 4 - حكومي' }] }
+      ]
+    }
+  ];
+
+  // مكون عرض الإشعارات
+  const Toast = () => {
+    if (!toastMessage) return null;
+    return (
+      <div className="fixed bottom-6 right-1/2 translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg z-50 animate-in slide-in-from-bottom-5 font-bold flex items-center gap-2">
+        <Download className="w-5 h-5" />
+        {toastMessage}
+      </div>
+    );
+  };
+
+  // ================= واجهات التطبيق =================
+
+  const renderHome = () => (
+    <div 
+      className="relative min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden"
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(15, 0, 0, 0.8), rgba(5, 0, 0, 0.95)), url('417465991_122105626388178265_4327482881084032506_n_2.jpg')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* إضاءة حمراء متحركة في الخلفية */}
+      <div style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '80vw', height: '80vw',
+        background: 'radial-gradient(circle, rgba(255,20,20,0.15) 0%, rgba(0,0,0,0) 60%)',
+        borderRadius: '50%',
+        animation: 'pulse 4s infinite alternate',
+      }}>
+        <style>
+          {`
+            @keyframes pulse {
+              0% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+              100% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+            }
+          `}
+        </style>
+      </div>
+
+      <div className="z-10 text-center mb-16">
+        <h1 className="text-4xl md:text-6xl font-bold text-red-500 mb-4 drop-shadow-[0_0_20px_rgba(255,0,0,0.6)]">
+          مرحباً بك في بوابتك الجامعية
+        </h1>
+        <h2 className="text-2xl md:text-4xl font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]">
+          جامعة بني سويف الأهلية
+        </h2>
+      </div>
+
+      <div className="z-10 flex flex-wrap justify-center gap-6 md:gap-10">
+        {/* زر مكتبة المحاضرات */}
+        <button 
+          onClick={() => setCurrentView('subjects')}
+          className="group flex flex-col items-center justify-center w-40 h-40 md:w-56 md:h-56 bg-black/60 border-2 border-red-900 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.4)] hover:-translate-y-2"
+        >
+          <BookOpen className="w-16 h-16 md:w-20 md:h-20 text-red-500 mb-4 group-hover:scale-110 transition-transform duration-300" />
+          <span className="text-white text-lg md:text-xl font-bold">مكتبة المحاضرات</span>
+        </button>
+
+        {/* زر المساعد الجامعي */}
+        <button 
+          onClick={() => setCurrentView('bot')}
+          className="group flex flex-col items-center justify-center w-40 h-40 md:w-56 md:h-56 bg-black/60 border-2 border-red-900 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.4)] hover:-translate-y-2"
+        >
+          <Bot className="w-16 h-16 md:w-20 md:h-20 text-red-500 mb-4 group-hover:scale-110 transition-transform duration-300" />
+          <span className="text-white text-lg md:text-xl font-bold">المساعد الجامعي</span>
+        </button>
+
+        {/* زر جدول المحاضرات */}
+        <button 
+          onClick={() => setCurrentView('groups')}
+          className="group flex flex-col items-center justify-center w-40 h-40 md:w-56 md:h-56 bg-black/60 border-2 border-red-900 rounded-2xl backdrop-blur-sm transition-all duration-300 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.4)] hover:-translate-y-2"
+        >
+          <Calendar className="w-16 h-16 md:w-20 md:h-20 text-red-500 mb-4 group-hover:scale-110 transition-transform duration-300" />
+          <span className="text-white text-lg md:text-xl font-bold">جدول المحاضرات</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderGroups = () => (
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-4 bg-[#050000] overflow-hidden">
+      {/* إضاءة حمراء متحركة في الخلفية */}
+      <div style={{
+        position: 'absolute',
+        top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '60vw', height: '60vw',
+        background: 'radial-gradient(circle, rgba(255,20,20,0.15) 0%, rgba(0,0,0,0) 60%)',
+        borderRadius: '50%'
+      }}></div>
+
+      <div className="w-full max-w-4xl z-10">
+        <button 
+          onClick={() => setCurrentView('home')} 
+          className="flex items-center text-red-500 hover:text-red-400 mb-12 transition-colors font-bold"
+        >
+          <ChevronRight className="w-6 h-6 ml-2" />
+          العودة للرئيسية
+        </button>
+
+        <h2 className="text-4xl font-bold text-white mb-12 text-center drop-shadow-[0_0_10px_rgba(255,0,0,0.4)]">
+          اختر الجروب الخاص بك
+        </h2>
+
+        <div className="flex flex-wrap justify-center gap-8">
+          <button 
+            onClick={() => { setSelectedGroup('جروب 1'); setCurrentView('schedule'); }}
+            className="group flex flex-col items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-[#110000] border-2 border-red-900 rounded-2xl transition-all duration-300 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.3)] hover:-translate-y-2"
+          >
+            <Users className="w-20 h-20 text-red-500 mb-4 group-hover:scale-110 transition-transform duration-300" />
+            <span className="text-white text-2xl font-bold">جروب 1</span>
+          </button>
+
+          <button 
+            onClick={() => { setSelectedGroup('جروب 2'); setCurrentView('schedule'); }}
+            className="group flex flex-col items-center justify-center w-48 h-48 md:w-64 md:h-64 bg-[#110000] border-2 border-red-900 rounded-2xl transition-all duration-300 hover:border-red-500 hover:shadow-[0_0_30px_rgba(255,0,0,0.3)] hover:-translate-y-2"
+          >
+            <Users className="w-20 h-20 text-red-500 mb-4 group-hover:scale-110 transition-transform duration-300" />
+            <span className="text-white text-2xl font-bold">جروب 2</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSchedule = () => {
+    const scheduleData = selectedGroup === 'جروب 1' ? scheduleGroup1 : selectedGroup === 'جروب 2' ? scheduleGroup2 : [];
+
+    return (
+      <div className="min-h-screen bg-[#0a0000] p-6 md:p-12">
+        <button 
+          onClick={() => setCurrentView('groups')} 
+          className="flex items-center text-red-500 hover:text-red-400 mb-8 transition-colors font-bold"
+        >
+          <ChevronRight className="w-6 h-6 ml-2" />
+          العودة للجروبات
+        </button>
+
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-white mb-8 flex items-center border-b border-red-900/50 pb-4">
+            <Calendar className="w-8 h-8 ml-3 text-red-500" />
+            الجدول الدراسي الأسبوعي - {selectedGroup}
+          </h2>
+
+          {scheduleData.length === 0 ? (
+            <div className="text-center p-12 bg-[#110000] border border-red-900/40 rounded-2xl">
+              <p className="text-red-400 text-xl font-bold">الجدول الخاص بهذا الجروب غير متوفر حالياً.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {scheduleData.map((dayData, index) => (
+                <div key={index} className="bg-[#110000] border border-red-900/40 rounded-2xl p-6 shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:border-red-500/50 transition-colors">
+                  <h3 className="text-2xl font-bold text-red-500 mb-6 pb-2 border-b border-red-900/30">
+                    {dayData.day}
+                  </h3>
+                  
+                  <div className="flex flex-col gap-4">
+                    {dayData.slots.map((slot, slotIdx) => (
+                      <div key={slotIdx} className="bg-[#1a0505] p-4 rounded-xl border border-red-900/20">
+                        <div className="flex items-center text-red-400 font-bold mb-3">
+                          <Clock className="w-4 h-4 ml-2" />
+                          <span dir="ltr">{slot.time}</span>
+                        </div>
+                        
+                        <div className="grid gap-3 md:grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+                          {slot.items.map((item, itemIdx) => (
+                            <div key={itemIdx} className="bg-[#2a0505]/50 p-3 rounded-lg border border-red-900/10 flex flex-col gap-1.5">
+                              <span className="font-bold text-white break-words">{item.subject}</span>
+                              <div className="flex items-center text-sm text-gray-400">
+                                <User className="w-3 h-3 ml-1 text-red-500/80" />
+                                {item.doctor}
+                              </div>
+                              <div className="flex items-center text-sm text-gray-400">
+                                <MapPin className="w-3 h-3 ml-1 text-red-500/80" />
+                                {item.hall}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSubjects = () => (
+    <div className="min-h-screen bg-[#050000] p-6 md:p-12">
+      <button 
+        onClick={() => setCurrentView('home')} 
+        className="flex items-center text-red-500 hover:text-red-400 mb-8 transition-colors font-bold"
+      >
+        <ChevronRight className="w-6 h-6 ml-2" />
+        العودة للرئيسية
+      </button>
+
+      {/* شريط البحث */}
+      <div className="flex justify-center mb-12">
+        <div className="relative w-full max-w-md">
+          <input 
+            type="text" 
+            placeholder="ابحث عن مادة..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#110000] border border-red-900/50 text-white rounded-full py-3 px-6 pr-12 focus:outline-none focus:border-red-500 focus:shadow-[0_0_15px_rgba(255,0,0,0.2)] transition-all"
+          />
+          <Search className="absolute right-4 top-3.5 w-5 h-5 text-red-500" />
+        </div>
+      </div>
+
+      {/* شبكة المواد */}
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {filteredSubjects.map(subject => (
+          <div 
+            key={subject.id}
+            onClick={() => { setSelectedSubject(subject); setCurrentView('lectures'); }}
+            className="bg-[#110000] border border-red-900/30 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 hover:border-red-500 hover:-translate-y-1 hover:shadow-[0_10px_20px_rgba(255,0,0,0.1)]"
+          >
+            <div className="w-16 h-16 bg-red-950/50 rounded-full flex items-center justify-center mb-4 text-red-500">
+              <BookOpen className="w-8 h-8" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-2">{subject.name}</h3>
+            <span className="text-sm text-red-500/80 bg-red-950/30 px-3 py-1 rounded-full">{subject.code}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderLectures = () => (
+    <div className="min-h-screen bg-[#050000] p-6 md:p-12 relative">
+      <button 
+        onClick={() => setCurrentView('subjects')} 
+        className="flex items-center text-red-500 hover:text-red-400 mb-8 transition-colors font-bold"
+      >
+        <ChevronRight className="w-6 h-6 ml-2" />
+        العودة للمواد
+      </button>
+
+      <div className="max-w-5xl mx-auto">
+        <h2 className="text-3xl font-bold text-white mb-8 border-b border-red-900/50 pb-4">
+          محاضرات: <span className="text-red-500">{selectedSubject?.name}</span>
+        </h2>
+
+        <div className="flex flex-col gap-5">
+          {(allLecturesData[selectedSubject?.code] || allLecturesData['default']).map(lecture => (
+            <div key={lecture.id} className="bg-[#110000] border border-red-900/30 rounded-xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-colors hover:border-red-900/80">
+              <div className="flex-1">
+                <h4 className="text-lg font-bold text-white mb-2">{lecture.title}</h4>
+                <p className="text-sm text-gray-400 mb-2">
+                  المحاضر: <span className="text-gray-300">{lecture.doctor}</span>
+                </p>
+                {!lecture.hasContent && (
+                  <span className="inline-block bg-red-900/40 text-red-400 text-xs px-2 py-1 rounded border border-red-900/50">
+                    لم يتم دراستها بعد / قريباً
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                {lecture.hasContent ? (
+                  <>
+                    <div className="flex flex-col gap-2 w-full md:w-auto border-l md:border-l-0 md:border-r border-red-900/50 md:pr-4">
+                      <button 
+                        onClick={() => handlePreview(lecture, 'ar')}
+                        className="flex items-center justify-center gap-2 bg-transparent border border-blue-600/50 text-blue-400 hover:bg-blue-600/10 px-4 py-2 rounded-lg transition-colors text-sm font-bold"
+                      >
+                        <Eye className="w-4 h-4" /> عربي (PDF)
+                      </button>
+                      <button 
+                        onClick={() => handlePreview(lecture, 'en')}
+                        className="flex items-center justify-center gap-2 bg-transparent border border-yellow-600/50 text-yellow-500 hover:bg-yellow-600/10 px-4 py-2 rounded-lg transition-colors text-sm font-bold"
+                      >
+                        <Eye className="w-4 h-4" /> English (PDF)
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col justify-center gap-2 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleExplain(lecture.title)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors text-sm font-bold shadow-[0_0_10px_rgba(220,38,38,0.3)] h-full"
+                      >
+                        <Bot className="w-4 h-4" /> اشرح لي
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <button 
+                    disabled
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#1a0505] text-gray-500 px-6 py-4 rounded-lg cursor-not-allowed border border-gray-800 text-sm font-bold"
+                  >
+                    المحتوى مغلق حالياً
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* نافذة معاينة التلخيص (Modal) */}
+      {previewModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0a0000] border-2 border-red-900 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_0_50px_rgba(255,0,0,0.2)]">
+            <div className="p-4 border-b border-red-900/50 flex justify-between items-center bg-[#110000] rounded-t-xl">
+              <h3 className="text-xl font-bold text-red-500 flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                {previewModal.title} - {previewModal.lang === 'ar' ? 'النسخة العربية' : 'English Version'}
+              </h3>
+              <button 
+                onClick={() => setPreviewModal({ ...previewModal, isOpen: false })}
+                className="text-gray-400 hover:text-white bg-red-900/30 hover:bg-red-900/60 p-2 rounded-lg transition-colors"
+              >
+                إغلاق (X)
+              </button>
+            </div>
+            
+            <div 
+              className="p-6 overflow-y-auto flex-1 text-gray-200 text-lg leading-relaxed whitespace-pre-wrap"
+              dir={previewModal.lang === 'ar' ? 'rtl' : 'ltr'}
+              style={{ fontFamily: previewModal.lang === 'en' ? 'sans-serif' : 'inherit' }}
+            >
+              {previewModal.content}
+            </div>
+
+            <div className="p-4 border-t border-red-900/50 bg-[#110000] rounded-b-xl flex justify-end gap-3">
+              <button 
+                onClick={() => {
+                  setPreviewModal({ ...previewModal, isOpen: false });
+                  handleExplain(previewModal.title);
+                }}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition-colors text-sm font-bold shadow-[0_0_10px_rgba(220,38,38,0.3)]"
+              >
+                <Bot className="w-4 h-4" /> العودة للمساعد لشرح جزء معين
+              </button>
+              <button 
+                className="flex items-center gap-2 bg-transparent border border-green-600/50 text-green-500 hover:bg-green-600/10 px-4 py-2 rounded-lg transition-colors text-sm font-bold"
+                onClick={() => setToastMessage('بدأ تحميل ملف الـ PDF بنجاح!')}
+              >
+                <Download className="w-4 h-4" /> تحميل الـ PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderBot = () => (
+    <div className="min-h-screen bg-[#050000] p-6 md:p-12 flex flex-col">
+      <button 
+        onClick={() => setCurrentView('home')} 
+        className="flex items-center text-red-500 hover:text-red-400 mb-4 transition-colors font-bold w-fit"
+      >
+        <ChevronRight className="w-6 h-6 ml-2" />
+        العودة للرئيسية
+      </button>
+
+      <div className="flex-1 max-w-5xl mx-auto w-full bg-[#110000] border border-red-900/40 rounded-2xl flex flex-col overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+        {/* رأس المحادثة */}
+        <div className="bg-[#1a0505] p-4 flex items-center gap-3 border-b border-red-900/50">
+          <div className="w-10 h-10 bg-red-900/30 rounded-full flex items-center justify-center">
+            <Bot className="w-6 h-6 text-red-500" />
+          </div>
+          <div>
+            <h3 className="font-bold text-white">المساعد الجامعي الذكي</h3>
+            <p className="text-xs text-green-500">متصل الآن - جاهز للشرح</p>
+          </div>
+        </div>
+        
+        {/* منطقة الرسائل */}
+        <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4">
+          {chatMessages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] md:max-w-[70%] rounded-2xl p-4 ${
+                msg.sender === 'user' 
+                  ? 'bg-red-900 text-white rounded-tl-none' 
+                  : 'bg-[#1f0505] border border-red-900/30 text-gray-200 rounded-tr-none'
+              }`}>
+                <div className="flex items-center gap-2 mb-2 opacity-70">
+                  {msg.sender === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  <span className="text-xs">{msg.sender === 'user' ? 'أنت' : 'المساعد'}</span>
+                </div>
+                <p className="whitespace-pre-wrap leading-relaxed text-sm md:text-base">{msg.text}</p>
+                <span className="text-[10px] opacity-50 block mt-2 text-left" dir="ltr">{msg.time}</span>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* منطقة الإدخال */}
+        <div className="p-4 bg-[#1a0505] border-t border-red-900/50">
+          <form onSubmit={handleSendMessage} className="flex gap-2">
+            <input 
+              type="text" 
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="اكتب سؤالك أو المحاضرة التي تريد شرحها..." 
+              className="flex-1 bg-[#0a0000] border border-red-900/50 text-white rounded-xl py-3 px-4 focus:outline-none focus:border-red-500 transition-colors"
+            />
+            <button 
+              type="submit"
+              disabled={!chatInput.trim()}
+              className="bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white w-12 rounded-xl flex items-center justify-center transition-colors"
+            >
+              <Send className="w-5 h-5 rtl:-scale-x-100" />
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div dir="rtl" className="font-sans min-h-screen bg-[#050000] text-gray-200">
+      {/* التبديل بين الواجهات */}
+      {currentView === 'home' && renderHome()}
+      {currentView === 'groups' && renderGroups()}
+      {currentView === 'subjects' && renderSubjects()}
+      {currentView === 'lectures' && renderLectures()}
+      {currentView === 'bot' && renderBot()}
+      {currentView === 'schedule' && renderSchedule()}
+      
+      {/* عرض الإشعارات */}
+      <Toast />
+    </div>
+  );
+};
+
+export default App;
